@@ -4,93 +4,97 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a TypeScript library template designed to be cloned/forked for creating new npm packages. It uses the `ts-builds` toolchain for standardized build scripts with ESM output.
+Monorepo for ESLint tooling for functional TypeScript with the functype library. Contains two independently published npm packages:
 
-**Template Usage**: See STANDARDIZATION_GUIDE.md for applying this pattern to other TypeScript projects.
+- **`packages/config`** (`eslint-config-functype`) — Curated ESLint config composing rules from eslint-plugin-functional, typescript-eslint, prettier, and import-sort. Exports `recommended`, `strict`, and `testOverrides` configs.
+- **`packages/plugin`** (`eslint-plugin-functype`) — 9 custom ESLint rules for functype-specific patterns. Exports `recommended` and `strict` configs with self-referencing plugin binding.
 
 ## Development Commands
 
-All commands delegate to `ts-builds` for consistency across projects:
-
 ```bash
-pnpm validate        # Main command: format + lint + test + build (use before commits)
-
-pnpm format          # Format code with Prettier
-pnpm format:check    # Check formatting only
-
-pnpm lint            # Fix ESLint issues
-pnpm lint:check      # Check ESLint issues only
-
-pnpm test            # Run tests once
-pnpm test:watch      # Run tests in watch mode
-pnpm test:coverage   # Run tests with coverage
-
-pnpm build           # Production build (outputs to dist/)
-pnpm dev             # Development build with watch mode
-
-pnpm typecheck       # Check TypeScript types
+pnpm validate              # Root: validates both packages via ts-builds chains
+pnpm validate:config       # Config only: format + lint + typecheck + build
+pnpm validate:plugin       # Plugin only: format + lint + typecheck + test + build
 ```
 
-### Running a Single Test
+### Per-package commands (run from package directory)
 
 ```bash
-pnpm test -- --testNamePattern="pattern"    # Filter by test name
-pnpm test -- test/specific.spec.ts          # Run specific file
+pnpm format / pnpm format:check    # Prettier
+pnpm lint / pnpm lint:check        # ESLint
+pnpm typecheck                     # TypeScript compilation check
+pnpm test                          # Vitest (plugin only — config has no tests)
+pnpm build                         # tsdown build to dist/
+pnpm dev                           # Watch mode
+```
+
+### Running specific tests
+
+```bash
+cd packages/plugin && pnpm test -- tests/rules/prefer-option.test.ts
 ```
 
 ## Architecture
 
-### Build System: ts-builds + tsdown
+### Monorepo Structure
 
-- **ts-builds**: Centralized toolchain package providing all build scripts
-- **tsdown**: Underlying bundler configured via `ts-builds/tsdown`
-- **Configuration**: `tsdown.config.ts` imports default config from ts-builds
-- **TypeScript**: `tsconfig.json` extends `ts-builds/tsconfig`
-- **Prettier**: Uses `ts-builds/prettier` shared config
-
-### Output Format
-
-- **dist/**: Production builds containing:
-  - `index.js` - ES module format
-  - `index.d.ts` - TypeScript declarations
-- **lib/**: Development builds (also published)
-
-### Package Exports
-
-```json
-{
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
-  }
-}
+```
+eslint-functype/
+├── pnpm-workspace.yaml           # packages: ["packages/*"]
+├── ts-builds.config.json          # workspace chains: validate → validate:config + validate:plugin
+├── packages/
+│   ├── config/                    # npm: eslint-config-functype
+│   │   ├── src/configs/           # recommended.ts, strict.ts, test-overrides.ts
+│   │   ├── src/cli/               # list-rules.ts CLI tool
+│   │   ├── src/utils/             # dependency-validator.ts
+│   │   └── tsdown.config.ts       # multi-entry: library + CLI (with banner)
+│   └── plugin/                    # npm: eslint-plugin-functype
+│       ├── src/rules/             # 9 custom ESLint rules
+│       ├── src/configs/           # recommended.ts, strict.ts
+│       ├── src/utils/             # functype-detection.ts
+│       └── tests/                 # 116 tests across 12 suites
 ```
 
-### Testing: Vitest
+### Build System
 
-- Tests located in `test/*.spec.ts`
-- Uses Vitest with configuration from ts-builds
-- Coverage via v8 provider
+- **ts-builds** — centralized toolchain for format, lint, typecheck, test, build
+- **tsdown** — bundler (ESM output, sourcemaps, TypeScript declarations)
+- **Vitest** — test runner (plugin package only)
 
-## Key Files
+### Config package (`packages/config`)
 
-- `src/index.ts` - Main library entry point
-- `test/*.spec.ts` - Test files
-- `tsdown.config.ts` - Build config (imports from ts-builds)
-- `tsconfig.json` - TypeScript config (extends ts-builds)
-- `.claude/skills/ts-builds-template/` - Claude Code skill for bootstrapping libraries from this template
+- Uses a custom `tsdown.config.ts` with two build targets: library entries + CLI with `#!/usr/bin/env node` banner
+- Peer dependencies on upstream plugins (eslint-plugin-functional, typescript-eslint, prettier, import-sort)
+- `eslint.config.mjs` uses `ts-builds/eslint` base (NOT its own config) to avoid circular dependency
+
+### Plugin package (`packages/plugin`)
+
+- Rules in `src/rules/` each export a standard ESLint rule object
+- `src/utils/functype-detection.ts` provides smart functype import/type detection to prevent false positives
+- `src/index.ts` uses ESLint 9 self-referencing plugin pattern for `configs.recommended` and `configs.strict`
+- Tests use `@typescript-eslint/rule-tester`
+
+## Key Design Decisions
+
+- **`functional/prefer-immutable-types` is OFF by default** in recommended config — functype types are immutable by design, `readonly` annotations create noise
+- **`functional/no-throw-statements`** uses `allowToRejectWith: true` — reduces noise for promise rejection patterns
+- **`testOverrides` config** relaxes functional rules for test files — every consumer project was doing this manually
+- **Plugin configs** include self-referencing plugin binding — consumers use `functypePlugin.configs.recommended` without manual plugin registration
+- **Packages are NOT merged** — different release cadences, different consumers (some use config without plugin)
+
+## Adding New Rules to Plugin
+
+1. Create rule file in `packages/plugin/src/rules/`
+2. Add to `packages/plugin/src/rules/index.ts` exports
+3. Add to configs (`recommended.ts` and/or `strict.ts`)
+4. Create test file in `packages/plugin/tests/rules/`
+5. Run `cd packages/plugin && pnpm validate`
 
 ## Publishing
 
-```bash
-npm version patch|minor|major
-npm publish --access public
-```
+Each package publishes independently to npm:
 
-The `prepublishOnly` hook automatically runs `pnpm validate` before publishing.
+```bash
+cd packages/config && npm version patch && npm publish --access public
+cd packages/plugin && npm version patch && npm publish --access public
+```

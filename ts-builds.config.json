@@ -1,4 +1,9 @@
 {
-  "srcDir": "./src",
-  "validateChain": ["format", "lint", "typecheck", "test", "build"]
+  "chains": {
+    "validate": ["validate:config", "validate:plugin"]
+  },
+  "commands": {
+    "validate:config": { "run": "pnpm validate", "cwd": "packages/config" },
+    "validate:plugin": { "run": "pnpm validate", "cwd": "packages/plugin" }
+  }
 }

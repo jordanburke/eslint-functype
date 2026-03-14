@@ -1,112 +1,135 @@
-## ts-builds-template
+# eslint-functype
 
-[![Node.js CI](https://github.com/jordanburke/ts-builds-template/actions/workflows/node.js.yml/badge.svg)](https://github.com/jordanburke/ts-builds-template/actions/workflows/node.js.yml)
-[![npm version](https://img.shields.io/npm/v/ts-builds-template.svg)](https://www.npmjs.com/package/ts-builds-template)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern TypeScript library template with standardized build scripts and tooling.
+Monorepo for ESLint tooling for functional TypeScript with [functype](https://github.com/jordanburke/functype).
 
-## Features
+## Packages
 
-- **Modern Build System**: [ts-builds](https://github.com/jordanburke/ts-builds) + [tsdown](https://tsdown.dev/) for fast bundling
-- **Testing**: [Vitest](https://vitest.dev/) with coverage reporting
-- **Code Quality**: ESLint + Prettier with automatic formatting and fixing
-- **ESM Output**: ES module output with proper TypeScript declarations
-- **Standardized Scripts**: Consistent commands via ts-builds across all projects
+| Package | Version | Description |
+| ------- | ------- | ----------- |
+| [eslint-config-functype](./packages/config) | [![npm](https://img.shields.io/npm/v/eslint-config-functype.svg)](https://www.npmjs.com/package/eslint-config-functype) | Curated ESLint config bundle composing rules from eslint-plugin-functional, typescript-eslint, prettier, and import-sort |
+| [eslint-plugin-functype](./packages/plugin) | [![npm](https://img.shields.io/npm/v/eslint-plugin-functype.svg)](https://www.npmjs.com/package/eslint-plugin-functype) | 9 custom ESLint rules for functype-specific patterns (prefer-option, prefer-either, prefer-fold, Do notation, etc.) |
 
 ## Quick Start
 
-1. **Use this template** to create a new repository
-2. **Clone your new repository**
-3. **Install dependencies**: `pnpm install`
-4. **Start developing**: `pnpm dev` (builds with watch mode)
-5. **Before committing**: `pnpm validate` (format + lint + test + build)
-
-## Development Commands
-
-### Pre-Checkin Command
+### Using both packages together (recommended)
 
 ```bash
-pnpm validate  # Main command: format, lint, test, and build everything
+pnpm add -D eslint-config-functype eslint-plugin-functype
 ```
 
-### Individual Commands
+```javascript
+// eslint.config.mjs
+import functypeConfig from "eslint-config-functype"
+import functypePlugin from "eslint-plugin-functype"
+
+export default [
+  functypeConfig.configs.recommended,
+  functypePlugin.configs.recommended,
+  functypeConfig.configs.testOverrides, // relaxes FP rules in test files
+]
+```
+
+### Using eslint-config-functype only (general FP rules)
 
 ```bash
-# Formatting
-pnpm format        # Format code with Prettier
-pnpm format:check  # Check formatting without writing
-
-# Linting
-pnpm lint          # Fix ESLint issues
-pnpm lint:check    # Check ESLint issues without fixing
-
-# Testing
-pnpm test          # Run tests once
-pnpm test:watch    # Run tests in watch mode
-pnpm test:coverage # Run tests with coverage report
-
-# Building
-pnpm build         # Production build
-pnpm dev           # Development mode with watch
-
-# Type Checking
-pnpm typecheck     # Check TypeScript types
+pnpm add -D eslint-config-functype
 ```
 
-## Publishing
+```javascript
+// eslint.config.mjs
+import functypeConfig from "eslint-config-functype"
 
-The template automatically runs `pnpm validate` before publishing via the `prepublishOnly` script.
+export default [
+  functypeConfig.configs.recommended, // or .strict
+]
+```
+
+### Using eslint-plugin-functype only (custom functype rules)
 
 ```bash
-npm version patch|minor|major
-npm publish --access public
+pnpm add -D eslint-plugin-functype
 ```
 
-## Project Structure
+```javascript
+// eslint.config.mjs
+import functypePlugin from "eslint-plugin-functype"
 
+export default [
+  functypePlugin.configs.recommended, // or .strict
+]
 ```
-src/
-├── index.ts          # Main library entry point
-test/
-├── *.spec.ts         # Test files
-dist/                 # Built output (ES module + types)
-```
 
-## Tooling
+## eslint-config-functype
 
-- **Build**: [ts-builds](https://github.com/jordanburke/ts-builds) - Centralized TypeScript toolchain
-- **Bundler**: [tsdown](https://tsdown.dev/) - Fast TypeScript bundler (successor to tsup)
-- **Test**: [Vitest](https://vitest.dev/) - Fast unit test framework
-- **Lint**: [ESLint](https://eslint.org/) with TypeScript support
-- **Format**: [Prettier](https://prettier.io/) with ESLint integration
-- **Package Manager**: [pnpm](https://pnpm.io/) for fast, efficient installs
+Curated configurations composing rules from upstream plugins. Two presets:
 
-## Claude Code Skill
+- **`recommended`** — balanced functional rules (warnings for mutations, `prefer-immutable-types` off, `no-throw-statements` with `allowToRejectWith`)
+- **`strict`** — maximum enforcement (errors for mutations, explicit return types, strict boolean expressions)
+- **`testOverrides`** — relaxes functional rules for test files (`*.test.ts`, `*.spec.ts`, test directories)
 
-This repository includes a Claude Code skill for bootstrapping new TypeScript libraries from this template:
+### Rules included
 
-**Location**: `.claude/skills/ts-builds-template/`
+- **Core JS**: `prefer-const`, `no-var`, `no-throw-literal`, `object-shorthand`, `prefer-template`
+- **TypeScript**: `consistent-type-imports`, `no-explicit-any`, `no-floating-promises`, `prefer-nullish-coalescing`, `prefer-optional-chain`
+- **Functional** (eslint-plugin-functional): `no-let`, `immutable-data`, `no-throw-statements`, `no-try-statements`
+- **Formatting**: prettier, simple-import-sort
 
-**Usage**: When using Claude Code, the skill provides guidance for:
+## eslint-plugin-functype
 
-- Cloning and customizing this template for a new library
-- Understanding the project structure and dev workflow
-- Publishing to npm
+9 custom ESLint rules for functype-specific patterns:
 
-**Installation** (for use in other projects):
+| Rule | Description | Auto-Fix |
+| ---- | ----------- | -------- |
+| `prefer-option` | Prefer `Option<T>` over `T \| null \| undefined` | Suggestion |
+| `prefer-either` | Prefer `Either<E, T>` over try/catch | Suggestion |
+| `prefer-list` | Prefer `List<T>` over native arrays | Suggestion |
+| `prefer-fold` | Prefer `.fold()` over if/else chains | Yes |
+| `prefer-map` | Prefer `.map()` over imperative transforms | Yes |
+| `prefer-flatmap` | Prefer `.flatMap()` over `.map().flat()` | Yes |
+| `no-get-unsafe` | Disallow unsafe `.get()` on Option/Either | No |
+| `no-imperative-loops` | Prefer functional iteration | Suggestion |
+| `prefer-do-notation` | Suggest Do notation for complex chains | Partial |
+
+## Development
+
+### Prerequisites
+
+- Node.js >= 22.0.0
+- pnpm 10.x
+
+### Commands
 
 ```bash
-# Copy the skill to your Claude Code skills directory
-cp -r .claude/skills/ts-builds-template ~/.claude/skills/
+pnpm install              # install all workspace dependencies
+pnpm validate             # validate both packages (format, lint, typecheck, test, build)
+pnpm validate:config      # validate config package only
+pnpm validate:plugin      # validate plugin package only
 ```
 
-**Related Skills**: For tooling configuration, migration guides, and standardizing existing projects, see the [ts-builds](https://github.com/jordanburke/ts-builds) skill.
+### Per-package commands
 
-**References**:
+```bash
+cd packages/config && pnpm validate    # format + lint + typecheck + build
+cd packages/plugin && pnpm validate    # format + lint + typecheck + test + build
+cd packages/plugin && pnpm test        # run 116 tests
+```
 
-- [CLAUDE.md](./CLAUDE.md) - Development guidance for this project
-- [.claude/skills/ts-builds-template/](./.claude/skills/ts-builds-template/) - Complete skill documentation
+### Publishing
 
----
+Each package is published independently:
 
-_This template is based on the earlier work of https://github.com/orabazu/tsup-library-template but updated with modern tooling and standardized scripts._
+```bash
+cd packages/config && npm version patch && npm publish --access public
+cd packages/plugin && npm version patch && npm publish --access public
+```
+
+## Related
+
+- [functype](https://github.com/jordanburke/functype) — Functional programming library for TypeScript
+- [ts-builds](https://github.com/jordanburke/ts-builds) — Standardized TypeScript build toolchain (provides ESLint config templates)
+
+## License
+
+[MIT](LICENSE)
