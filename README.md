@@ -65,7 +65,7 @@ export default [
 
 Curated configurations composing rules from upstream plugins. Two presets:
 
-- **`recommended`** — balanced functional rules (warnings for mutations, `prefer-immutable-types` off, `no-throw-statements` with `allowToRejectWith`)
+- **`recommended`** — balanced functional rules (warnings for mutations, `prefer-immutable-types` off, `no-throw-statements` with `allowToRejectPromises`)
 - **`strict`** — maximum enforcement (errors for mutations, explicit return types, strict boolean expressions)
 - **`testOverrides`** — relaxes functional rules for test files (`*.test.ts`, `*.spec.ts`, test directories)
 

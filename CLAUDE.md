@@ -77,7 +77,7 @@ eslint-functype/
 ## Key Design Decisions
 
 - **`functional/prefer-immutable-types` is OFF by default** in recommended config — functype types are immutable by design, `readonly` annotations create noise
-- **`functional/no-throw-statements`** uses `allowToRejectWith: true` — reduces noise for promise rejection patterns
+- **`functional/no-throw-statements`** uses `allowToRejectPromises: true` — reduces noise for promise rejection patterns
 - **`testOverrides` config** relaxes functional rules for test files — every consumer project was doing this manually
 - **Plugin configs** include self-referencing plugin binding — consumers use `functypePlugin.configs.recommended` without manual plugin registration
 - **Packages are NOT merged** — different release cadences, different consumers (some use config without plugin)
