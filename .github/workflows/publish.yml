@@ -38,10 +38,10 @@ jobs:
       - name: Verify package contents
         run: |
           echo "=== eslint-config-functype ==="
-          cd packages/config && npm pack --dry-run
+          (cd packages/config && npm pack --dry-run)
           echo ""
           echo "=== eslint-plugin-functype ==="
-          cd packages/plugin && npm pack --dry-run
+          (cd packages/plugin && npm pack --dry-run)
 
       - name: Publish eslint-config-functype
         run: cd packages/config && npm publish --provenance --access public
