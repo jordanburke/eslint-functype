@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monorepo for ESLint tooling for functional TypeScript with the functype library. Contains two independently published npm packages:
 
-- **`packages/config`** (`eslint-config-functype`) — Curated ESLint config composing rules from eslint-plugin-functional, typescript-eslint, prettier, and import-sort. Exports `recommended`, `strict`, and `testOverrides` configs.
+- **`packages/config`** (`eslint-config-functype`) — Curated ESLint config composing rules from typescript-eslint, prettier, and import-sort. Exports `recommended`, `strict`, and `testOverrides` configs.
 - **`packages/plugin`** (`eslint-plugin-functype`) — 9 custom ESLint rules for functype-specific patterns. Exports `recommended` and `strict` configs with self-referencing plugin binding.
 
 ## Development Commands
@@ -52,7 +52,7 @@ eslint-functype/
 │       ├── src/rules/             # 9 custom ESLint rules
 │       ├── src/configs/           # recommended.ts, strict.ts
 │       ├── src/utils/             # functype-detection.ts
-│       └── tests/                 # 116 tests across 12 suites
+│       └── tests/                 # 138 tests across 12 suites
 ```
 
 ### Build System
@@ -64,7 +64,7 @@ eslint-functype/
 ### Config package (`packages/config`)
 
 - Uses a custom `tsdown.config.ts` with two build targets: library entries + CLI with `#!/usr/bin/env node` banner
-- Peer dependencies on upstream plugins (eslint-plugin-functional, typescript-eslint, prettier, import-sort)
+- Peer dependencies on typescript-eslint, prettier, import-sort (eslint-plugin-functional was removed in v2.1.0)
 - `eslint.config.mjs` uses `ts-builds/eslint` base (NOT its own config) to avoid circular dependency
 
 ### Plugin package (`packages/plugin`)
@@ -76,9 +76,8 @@ eslint-functype/
 
 ## Key Design Decisions
 
-- **`functional/prefer-immutable-types` is OFF by default** in recommended config — functype types are immutable by design, `readonly` annotations create noise
-- **`functional/no-throw-statements`** uses `allowToRejectPromises: true` — reduces noise for promise rejection patterns
-- **`testOverrides` config** relaxes functional rules for test files — every consumer project was doing this manually
+- **`eslint-plugin-functional` removed** (v2.1.0) — the functype plugin's own rules cover the same patterns with better specificity
+- **`testOverrides` config** is an empty extension point for test files — consumers can layer their own test relaxations
 - **Plugin configs** include self-referencing plugin binding — consumers use `functypePlugin.configs.recommended` without manual plugin registration
 - **Packages are NOT merged** — different release cadences, different consumers (some use config without plugin)
 
@@ -92,9 +91,14 @@ eslint-functype/
 
 ## Publishing
 
-Each package publishes independently to npm:
+Both packages publish via GitHub Actions with npm provenance on `v*` tags:
 
 ```bash
-cd packages/config && npm version patch && npm publish --access public
-cd packages/plugin && npm version patch && npm publish --access public
+# Bump versions, commit, tag, push — CI publishes
+cd packages/config && npm version patch --no-git-tag-version
+cd packages/plugin && npm version patch --no-git-tag-version
+git add -A && git commit -m "bump to vX.Y.Z"
+git tag vX.Y.Z && git push --follow-tags
 ```
+
+Or use the `/vbctp` skill which validates before bumping.
