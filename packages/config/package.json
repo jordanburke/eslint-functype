@@ -80,7 +80,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "ts-builds": "^2.6.2",
+    "ts-builds": "^2.6.3",
     "tsdown": "^0.21.7"
   },
   "author": "Jordan Burke",
