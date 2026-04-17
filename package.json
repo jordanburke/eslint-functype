@@ -23,8 +23,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.12.2",
-    "ts-builds": "^2.6.3",
-    "tsdown": "^0.21.7"
+    "ts-builds": "^2.7.0",
+    "tsdown": "^0.21.9"
   },
   "type": "module",
   "prettier": "ts-builds/prettier",
