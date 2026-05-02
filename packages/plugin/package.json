@@ -62,7 +62,7 @@
     "@types/node": "^24.12.2",
     "@typescript-eslint/rule-tester": "^8.59.1",
     "eslint-config-prettier": "^10.1.8",
-    "functype": "^0.60.2",
+    "functype": "^0.60.3",
     "ts-builds": "^2.7.1",
     "tsdown": "^0.21.10"
   },
