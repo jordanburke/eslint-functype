@@ -64,7 +64,7 @@
     "eslint-config-prettier": "^10.1.8",
     "functype": "^0.60.2",
     "ts-builds": "^2.7.1",
-    "tsdown": "^0.21.10"
+    "tsdown": "^0.22.0"
   },
   "author": {
     "name": "Jordan Burke",
